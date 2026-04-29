@@ -1,0 +1,75 @@
+export type UserRole = "admin" | "employee";
+
+export type TicketStatus = "pending" | "in_progress" | "completed";
+
+export type User = {
+  _id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  profileImageUrl?: string | null;
+  role: UserRole;
+  isMainAdmin?: boolean;
+  department?: string | null;
+};
+
+export type Ticket = {
+  _id: string;
+  title: string;
+  description: string;
+  status: TicketStatus;
+  imageUrl?: string | null;
+  completionImageUrl?: string | null;
+  assignedTo?: Pick<User, "_id" | "name" | "department"> | null;
+  createdBy?: Pick<User, "_id" | "name" | "department"> | null;
+  assignmentHistory?: Array<{
+    assignedBy?: Pick<User, "_id" | "name" | "department"> | null;
+    assignedTo?: Pick<User, "_id" | "name" | "department"> | null;
+    department?: string | null;
+    assignedAt?: string;
+  }>;
+  completedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type TicketPagination = {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+};
+
+export type RoomInspectionCategoryCard = {
+  categoryKey: string;
+  categoryName: string;
+  totalRooms: number;
+  completedRooms: number;
+  progress: string;
+  assignedTo?: Pick<User, "_id" | "name" | "department"> | null;
+};
+
+export type RoomInspectionDay = {
+  date: string;
+  total: number;
+  completed: number;
+  color: "green" | "yellow" | "red";
+};
+
+export type RoomInspection = {
+  _id: string;
+  inspectionDate: string;
+  categoryKey: string;
+  categoryName: string;
+  roomNumber: number;
+  roomLabel: string;
+  department: string;
+  status: TicketStatus;
+  assignedTo?: Pick<User, "_id" | "name" | "department"> | null;
+  notes?: string;
+  checklist?: Array<{ label: string; isChecked: boolean }>;
+  createdAt?: string;
+  completedAt?: string | null;
+};
