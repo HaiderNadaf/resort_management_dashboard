@@ -8,45 +8,14 @@ const api = axios.create({
   timeout: 10000,
 });
 
-const mockUsers: User[] = [
-  { _id: "u1", name: "Emily Clark", email: "emily@company.com", role: "admin", isMainAdmin: true },
-  { _id: "u2", name: "Alex Rivera", role: "employee" },
-  { _id: "u3", name: "Samira Jones", role: "employee" },
-  { _id: "u4", name: "David Chen", role: "employee" },
-];
-
-const mockTickets: Ticket[] = [
-  {
-    _id: "tkt-1042",
-    title: "VPN Access Failing",
-    description: "Unable to connect to corporate VPN.",
-    status: "in_progress",
-    imageUrl: "https://picsum.photos/seed/tkt1042/120/80",
-    completionImageUrl: null,
-    assignedTo: { _id: "u2", name: "Alex Rivera" },
-    createdBy: { _id: "u1", name: "Emily Clark" },
-  },
-  {
-    _id: "tkt-1043",
-    title: "New Monitor Request",
-    description: "Requesting a second monitor for workstation.",
-    status: "pending",
-    imageUrl: "https://picsum.photos/seed/tkt1043/120/80",
-    completionImageUrl: null,
-    assignedTo: null,
-    createdBy: { _id: "u1", name: "Emily Clark" },
-  },
-  {
-    _id: "tkt-1044",
-    title: "Software License Renewal",
-    description: "Adobe CC license renewal required.",
-    status: "completed",
-    imageUrl: "https://picsum.photos/seed/tkt1044/120/80",
-    completionImageUrl: "https://picsum.photos/seed/tkt1044done/120/80",
-    assignedTo: { _id: "u3", name: "Samira Jones" },
-    createdBy: { _id: "u1", name: "Emily Clark" },
-  },
-];
+function apiErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError(error)) {
+    const message = error.response?.data?.message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
 
 export async function loginAdmin(phone: string, password: string) {
   const { data } = await api.post("/auth/login", { phone, password, role: "admin" });
@@ -59,8 +28,8 @@ export async function getMe(token: string): Promise<User> {
       headers: { Authorization: `Bearer ${token}` },
     });
     return data.user as User;
-  } catch {
-    return mockUsers[0];
+  } catch (error) {
+    throw new Error(apiErrorMessage(error, "Failed to fetch current user"));
   }
 }
 
@@ -70,8 +39,8 @@ export async function getUsers(token: string): Promise<User[]> {
       headers: { Authorization: `Bearer ${token}` },
     });
     return (data.users || []) as User[];
-  } catch {
-    return mockUsers;
+  } catch (error) {
+    throw new Error(apiErrorMessage(error, "Failed to fetch users"));
   }
 }
 
@@ -99,24 +68,8 @@ export async function getTickets(
         hasPrevPage: Boolean(data.hasPrevPage),
       },
     };
-  } catch {
-    const page = params?.page ?? 1;
-    const limit = params?.limit ?? 10;
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const sliced = mockTickets.slice(start, end);
-    const totalPages = Math.max(Math.ceil(mockTickets.length / limit), 1);
-    return {
-      tickets: sliced,
-      pagination: {
-        page,
-        limit,
-        totalCount: mockTickets.length,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
-    };
+  } catch (error) {
+    throw new Error(apiErrorMessage(error, "Failed to fetch tickets"));
   }
 }
 
@@ -135,23 +88,19 @@ export async function assignTicket(
       headers: { Authorization: `Bearer ${token}` },
     });
     return data;
-  } catch {
-    return {
-      _id: `local-${Date.now()}`,
-      title: payload.title,
-      description: payload.description,
-      status: "pending",
-      imageUrl: URL.createObjectURL(payload.image),
-      completionImageUrl: null,
-      assignedTo: mockUsers.find((user) => user._id === payload.assignedTo) ?? null,
-    } as Ticket;
+  } catch (error) {
+    throw new Error(apiErrorMessage(error, "Failed to assign ticket"));
   }
 }
 
 export async function getRoomInspectionDashboard(
   token: string,
   date: string
-): Promise<{ inspectionDate: string; categories: RoomInspectionCategoryCard[] }> {
+): Promise<{
+  inspectionDate: string;
+  categories: RoomInspectionCategoryCard[];
+  summary: { total: number; completed: number; inProgress: number; pending: number };
+}> {
   const { data } = await api.get("/room-inspections/dashboard", {
     params: { date },
     headers: { Authorization: `Bearer ${token}` },
@@ -159,12 +108,26 @@ export async function getRoomInspectionDashboard(
   return {
     inspectionDate: data.inspectionDate ?? date,
     categories: (data.categories || []) as RoomInspectionCategoryCard[],
+    summary: {
+      total: Number(data.summary?.total || 0),
+      completed: Number(data.summary?.completed || 0),
+      inProgress: Number(data.summary?.inProgress || 0),
+      pending: Number(data.summary?.pending || 0),
+    },
   };
 }
 
-export async function getRoomInspectionCalendar(token: string, month: string): Promise<RoomInspectionDay[]> {
+export async function getRoomInspectionCalendar(
+  token: string,
+  month: string,
+  filters?: { color?: RoomInspectionDay["color"]; date?: string }
+): Promise<RoomInspectionDay[]> {
   const { data } = await api.get("/room-inspections/calendar", {
-    params: { month },
+    params: {
+      month,
+      ...(filters?.color ? { color: filters.color } : {}),
+      ...(filters?.date ? { date: filters.date } : {}),
+    },
     headers: { Authorization: `Bearer ${token}` },
   });
   return (data.days || []) as RoomInspectionDay[];

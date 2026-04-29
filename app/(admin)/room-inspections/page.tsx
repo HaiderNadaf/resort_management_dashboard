@@ -18,6 +18,10 @@ function monthKey(date: Date) {
   return date.toISOString().slice(0, 7);
 }
 
+function parseDateKey(value: string) {
+  return new Date(`${value}T00:00:00`);
+}
+
 function prettyDateLabel(value: Date) {
   return value.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
@@ -49,17 +53,35 @@ export default function RoomInspectionsPage() {
   const [rooms, setRooms] = useState<RoomInspection[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [dashboardSummary, setDashboardSummary] = useState({
+    total: 0,
+    completed: 0,
+    inProgress: 0,
+    pending: 0,
+  });
+  const [calendarStatusFilter, setCalendarStatusFilter] = useState<"all" | RoomInspectionDay["color"]>("all");
+  const [calendarDateFilter, setCalendarDateFilter] = useState("");
 
-  const selectedDate = dateKey(cursor);
-  const selectedMonth = monthKey(cursor);
+  const baseDateKey = dateKey(cursor);
+  const selectedDate = calendarDateFilter || baseDateKey;
+  const selectedMonth = monthKey(calendarDateFilter ? parseDateKey(calendarDateFilter) : cursor);
+  const selectedDateLabel = prettyDateLabel(parseDateKey(selectedDate));
 
   useEffect(() => {
     if (!token) return;
     setIsLoading(true);
     setError("");
-    Promise.all([getRoomInspectionDashboard(token, selectedDate), getRoomInspectionCalendar(token, selectedMonth)])
+    const calendarFilters = {
+      ...(calendarStatusFilter !== "all" ? { color: calendarStatusFilter } : {}),
+      ...(calendarDateFilter ? { date: calendarDateFilter } : {}),
+    };
+    Promise.all([
+      getRoomInspectionDashboard(token, selectedDate),
+      getRoomInspectionCalendar(token, selectedMonth, calendarFilters),
+    ])
       .then(([dashboard, calendar]) => {
         setCategories(dashboard.categories || []);
+        setDashboardSummary(dashboard.summary || { total: 0, completed: 0, inProgress: 0, pending: 0 });
         setDays(calendar || []);
         const firstCategory = dashboard.categories?.[0]?.categoryKey ?? "";
         setSelectedCategory((prev) => {
@@ -70,7 +92,7 @@ export default function RoomInspectionsPage() {
         });
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load room inspections"));
-  }, [token, selectedDate, selectedMonth]);
+  }, [token, selectedDate, selectedMonth, calendarStatusFilter, calendarDateFilter]);
 
   useEffect(() => {
     if (!token || !selectedCategory) {
@@ -86,8 +108,6 @@ export default function RoomInspectionsPage() {
 
   const totalRooms = categories.reduce((sum, item) => sum + item.totalRooms, 0);
   const completedRooms = categories.reduce((sum, item) => sum + item.completedRooms, 0);
-  const inProgressRooms = rooms.filter((room) => room.status === "in_progress").length;
-  const pendingRooms = rooms.filter((room) => room.status === "pending").length;
 
   const checklistColumns = useMemo(() => {
     const seen = new Set<string>();
@@ -122,9 +142,53 @@ export default function RoomInspectionsPage() {
     return { green, yellow, red };
   }, [days]);
 
+  const selectedCategorySummary = useMemo(() => {
+    const completed = rooms.filter((room) => room.status === "completed").length;
+    const inProgress = rooms.filter((room) => room.status === "in_progress").length;
+    const pending = rooms.filter((room) => room.status === "pending").length;
+    return {
+      total: rooms.length,
+      completed,
+      inProgress,
+      pending,
+    };
+  }, [rooms]);
+
   return (
     <MainAdminGuard>
-      <section className="space-y-5 rounded-2xl border border-[#d7e2db] bg-[#f5f8f5] p-4">
+
+<section className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">Monthly Calendar Status</h3>
+              <p className="mt-1 text-xs text-slate-500">{selectedMonth}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+             
+              <input
+                type="date"
+                value={calendarDateFilter}
+                onChange={(event) => setCalendarDateFilter(event.target.value)}
+                className="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setCalendarStatusFilter("all");
+                  setCalendarDateFilter("");
+                }}
+                className="rounded border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+         
+        </section>
+
+
+
+      <section className="space-y-5 mt-2 rounded-2xl border border-[#d7e2db] bg-[#f5f8f5] p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold text-slate-900">Today&apos;s Progress</h2>
           <div className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500">
@@ -177,6 +241,8 @@ export default function RoomInspectionsPage() {
           })}
         </div>
 
+        
+
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -185,21 +251,16 @@ export default function RoomInspectionsPage() {
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700">
-                {completedRooms} Completed
+                {selectedCategorySummary.completed} Completed
               </span>
               <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-amber-700">
-                {inProgressRooms} In Progress
+                {selectedCategorySummary.inProgress} In Progress
               </span>
               <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600">
-                {pendingRooms} Not Started
+                {selectedCategorySummary.pending} Not Started
               </span>
-              <button
-                type="button"
-                onClick={() => setCursor(new Date())}
-                className="rounded-md border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700"
-              >
-                Today
-              </button>
+              
+             
             </div>
           </div>
 
@@ -222,12 +283,13 @@ export default function RoomInspectionsPage() {
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
             <div className="font-semibold">
-              Date: <span className="text-slate-900">{prettyDateLabel(cursor)}</span>
+              Date: <span className="text-slate-900">{selectedDateLabel}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => {
+                  setCalendarDateFilter("");
                   const next = new Date(cursor);
                   next.setDate(next.getDate() - 1);
                   setCursor(next);
@@ -239,6 +301,7 @@ export default function RoomInspectionsPage() {
               <button
                 type="button"
                 onClick={() => {
+                  setCalendarDateFilter("");
                   const next = new Date(cursor);
                   next.setDate(next.getDate() + 1);
                   setCursor(next);
@@ -297,45 +360,8 @@ export default function RoomInspectionsPage() {
             ) : null}
           </div>
 
-          <div className="mt-3 grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs md:grid-cols-4">
-            <div>
-              <p className="text-slate-500">Today&apos;s Total</p>
-              <p className="text-base font-semibold text-slate-900">
-                {completedRooms} / {totalRooms}
-              </p>
-            </div>
-            <div>
-              <p className="text-slate-500">Overall Complete</p>
-              <p className="text-base font-semibold text-emerald-700">{overallProgress}% Complete</p>
-            </div>
-            <div>
-              <p className="text-slate-500">Selected Category</p>
-              <p className="text-base font-semibold text-slate-900">{selectedCategoryName}</p>
-            </div>
-            <div>
-              <p className="text-slate-500">Month Summary</p>
-              <p className="text-base font-semibold text-slate-900">
-                {monthSummary.green} / {monthSummary.yellow} / {monthSummary.red}
-              </p>
-            </div>
-          </div>
+          
         </div>
-
-        <section className="rounded-xl border border-slate-200 bg-white p-4">
-          <h3 className="text-base font-semibold text-slate-900">Monthly Calendar Status</h3>
-          <p className="mt-1 text-xs text-slate-500">{selectedMonth}</p>
-          <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-            {days.map((day) => (
-              <div key={day.date} className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2 text-xs">
-                <span className="text-slate-700">{day.date}</span>
-                <span className={`rounded-full px-2 py-0.5 font-semibold ${calendarColorClass(day.color)}`}>
-                  {day.completed}/{day.total}
-                </span>
-              </div>
-            ))}
-            {!days.length ? <p className="text-sm text-slate-500">No calendar data available.</p> : null}
-          </div>
-        </section>
 
         {error ? (
           <p className="rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
