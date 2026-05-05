@@ -1,5 +1,13 @@
 import axios from "axios";
-import { RoomInspection, RoomInspectionCategoryCard, RoomInspectionDay, Ticket, TicketPagination, User } from "@/lib/types";
+import {
+  AttendanceRecord,
+  RoomInspection,
+  RoomInspectionCategoryCard,
+  RoomInspectionDay,
+  Ticket,
+  TicketPagination,
+  User,
+} from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
 
@@ -143,4 +151,17 @@ export async function getRoomInspectionsByCategory(
     headers: { Authorization: `Bearer ${token}` },
   });
   return (data.inspections || []) as RoomInspection[];
+}
+
+export async function getAttendanceRecords(
+  token: string,
+  params?: { date?: string }
+): Promise<AttendanceRecord[]> {
+  const { data } = await api.get("/attendance", {
+    params: {
+      ...(params?.date ? { date: params.date } : {}),
+    },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return (data.attendance || []) as AttendanceRecord[];
 }

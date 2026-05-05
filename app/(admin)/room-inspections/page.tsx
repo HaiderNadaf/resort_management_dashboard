@@ -1,5 +1,7 @@
 "use client";
 
+import { Dialog, DialogPanel } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useMemo, useState } from "react";
 import { MainAdminGuard } from "@/components/dashboard/MainAdminGuard";
 import {
@@ -61,6 +63,7 @@ export default function RoomInspectionsPage() {
   });
   const [calendarStatusFilter, setCalendarStatusFilter] = useState<"all" | RoomInspectionDay["color"]>("all");
   const [calendarDateFilter, setCalendarDateFilter] = useState("");
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
   const baseDateKey = dateKey(cursor);
   const selectedDate = calendarDateFilter || baseDateKey;
@@ -155,7 +158,8 @@ export default function RoomInspectionsPage() {
   }, [rooms]);
 
   return (
-    <MainAdminGuard>
+    <>
+      <MainAdminGuard>
 
 <section className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -323,12 +327,20 @@ export default function RoomInspectionsPage() {
                       {column}
                     </th>
                   ))}
+                  <th className="border-b border-slate-200 px-3 py-2 text-left font-semibold">Assigned By (Admin)</th>
+                  <th className="border-b border-slate-200 px-3 py-2 text-left font-semibold">Assigned To (Employee)</th>
+                  <th className="border-b border-slate-200 px-3 py-2 text-left font-semibold">Notes</th>
+                  <th className="border-b border-slate-200 px-3 py-2 text-center font-semibold">Image</th>
                   <th className="border-b border-slate-200 px-3 py-2 text-center font-semibold">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {rooms.map((room) => {
                   const checksByLabel = new Map((room.checklist || []).map((item) => [item.label.trim(), item.isChecked]));
+                  const latestAssignedBy =
+                    room.assignedBy?.name ||
+                    room.assignmentHistory?.[room.assignmentHistory.length - 1]?.assignedBy?.name ||
+                    "-";
                   return (
                     <tr key={room._id} className="bg-white">
                       <td className="border-b border-slate-100 px-3 py-2 font-medium text-slate-700">{room.roomLabel}</td>
@@ -345,6 +357,39 @@ export default function RoomInspectionsPage() {
                           )}
                         </td>
                       ))}
+                      <td className="border-b border-slate-100 px-3 py-2 text-slate-700">
+                        {latestAssignedBy}
+                      </td>
+                      <td className="border-b border-slate-100 px-3 py-2 text-slate-700">
+                        {room.assignedTo?.name || "-"}
+                      </td>
+                      <td className="border-b border-slate-100 px-3 py-2 text-slate-700">
+                        {room.notes?.trim() ? room.notes : "-"}
+                      </td>
+                      <td className="border-b border-slate-100 px-3 py-2 text-center">
+                        {room.progressImageUrl ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPreviewImage({
+                                url: room.progressImageUrl!,
+                                title: `${room.roomLabel} - progress image`,
+                              })
+                            }
+                            className="inline-flex"
+                          >
+                            <img
+                              src={room.progressImageUrl}
+                              alt={`${room.roomLabel} progress`}
+                              className="h-12 w-16 rounded-md object-cover ring-1 ring-slate-200"
+                            />
+                          </button>
+                        ) : (
+                          <div className="mx-auto grid h-12 w-16 place-items-center rounded-md border border-dashed border-slate-300 bg-slate-50 text-[10px] text-slate-400">
+                            No image
+                          </div>
+                        )}
+                      </td>
                       <td className="border-b border-slate-100 px-3 py-2 text-center">
                         <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${roomStatusClass(room.status)}`}>
                           {roomStatusText(room.status)}
@@ -368,6 +413,31 @@ export default function RoomInspectionsPage() {
         ) : null}
         {isLoading ? <p className="text-sm text-slate-500">Loading room inspections...</p> : null}
       </section>
-    </MainAdminGuard>
+      </MainAdminGuard>
+
+      <Dialog open={Boolean(previewImage)} onClose={() => setPreviewImage(null)} className="relative z-50">
+        <div className="fixed inset-0 bg-black/70" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-4xl rounded-xl bg-white p-4 shadow-xl">
+            {previewImage ? (
+              <>
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-medium text-slate-700">{previewImage.title}</p>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewImage(null)}
+                    className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                    aria-label="Close image preview"
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                </div>
+                <img src={previewImage.url} alt={previewImage.title} className="max-h-[75vh] w-full rounded-lg object-contain" />
+              </>
+            ) : null}
+          </DialogPanel>
+        </div>
+      </Dialog>
+    </>
   );
 }

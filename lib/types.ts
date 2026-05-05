@@ -67,9 +67,33 @@ export type RoomInspection = {
   roomLabel: string;
   department: string;
   status: TicketStatus;
+  assignedBy?: Pick<User, "_id" | "name" | "department"> | null;
   assignedTo?: Pick<User, "_id" | "name" | "department"> | null;
+  assignmentHistory?: Array<{
+    assignedBy?: Pick<User, "_id" | "name" | "department"> | null;
+    assignedAt?: string;
+  }>;
   notes?: string;
+  progressImageUrl?: string | null;
   checklist?: Array<{ label: string; isChecked: boolean }>;
   createdAt?: string;
   completedAt?: string | null;
+};
+
+export type AttendanceRecord = {
+  _id: string;
+  dateKey: string;
+  user?: Pick<User, "_id" | "name" | "phone" | "department"> | null;
+  checkIn?: {
+    latitude: number;
+    longitude: number;
+    capturedAt: string;
+    capturedAtLabel?: string;
+  } | null;
+  checkOut?: {
+    latitude: number;
+    longitude: number;
+    capturedAt: string;
+    capturedAtLabel?: string;
+  } | null;
 };
