@@ -54,7 +54,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
           <div className="flex items-center gap-3">
             <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-lg bg-white/10 ring-1 ring-white/20">
               {logoFailed ? (
-                <span className="text-sm font-semibold text-purple-300">TS</span>
+                <span className="text-sm font-semibold text-violet-300">TS</span>
               ) : (
                 <Image
                   src="/logo.png"
@@ -89,10 +89,10 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
                 }`}
               >
                 <span className="flex items-center gap-2.5">
-                  <Icon className={`h-4 w-4 ${active ? "text-purple-400" : "text-slate-400"}`} />
+                  <Icon className={`h-4 w-4 ${active ? "text-violet-400" : "text-slate-400"}`} />
                   {item.label}
                 </span>
-                <span className={`h-2.5 w-2.5 rounded-full ${active ? "bg-purple-500" : "bg-transparent"}`} />
+                <span className={`h-2.5 w-2.5 rounded-full ${active ? "bg-violet-500" : "bg-transparent"}`} />
               </Link>
             );
           })}

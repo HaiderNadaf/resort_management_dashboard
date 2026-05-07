@@ -5,7 +5,7 @@ type SummaryCardProps = {
 };
 
 const accentMap: Record<NonNullable<SummaryCardProps["accent"]>, string> = {
-  purple: "from-purple-500 to-violet-500",
+  purple: "from-violet-500 to-purple-500",
   amber: "from-amber-500 to-orange-500",
   indigo: "from-indigo-500 to-violet-500",
   emerald: "from-emerald-500 to-teal-500",
