@@ -109,7 +109,7 @@ export default function AttendancePage() {
                     {item.checkOut ? (
                       <button
                         type="button"
-                        className="rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700"
+                        className="rounded-md bg-purple-50 px-2 py-1 text-xs font-semibold text-purple-700"
                         onClick={() =>
                           setActiveMap({
                             id: item._id,

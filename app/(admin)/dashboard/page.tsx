@@ -61,7 +61,7 @@ export default function DashboardPage() {
     <MainAdminGuard>
       <div className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <SummaryCard label="Total Tickets" value={total} accent="blue" />
+          <SummaryCard label="Total Tickets" value={total} accent="purple" />
           <SummaryCard label="Pending Tickets" value={pending} accent="amber" />
           <SummaryCard label="In Progress Tickets" value={inProgress} accent="indigo" />
           <SummaryCard label="Completed Tickets" value={completed} accent="emerald" />
