@@ -6,9 +6,11 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   Bars3Icon,
+  BuildingOffice2Icon,
   ChartBarSquareIcon,
   CheckBadgeIcon,
   ClipboardDocumentCheckIcon,
+  ClockIcon,
   MapPinIcon,
   TicketIcon,
   UserCircleIcon,
@@ -26,6 +28,8 @@ const navItems = [
   { href: "/tickets", label: "All Tickets", icon: TicketIcon },
   { href: "/room-inspections", label: "Room Inspections", icon: ClipboardDocumentCheckIcon },
   { href: "/attendance", label: "Attendance", icon: MapPinIcon },
+  { href: "/daily-tasks", label: "Daily Tasks", icon: ClockIcon },
+  { href: "/department-activity", label: "Department Activity", icon: BuildingOffice2Icon },
   { href: "/completed-tickets", label: "Completed Tickets", icon: CheckBadgeIcon },
   { href: "/users", label: "Users", icon: UsersIcon },
   { href: "/profile", label: "Profile", icon: UserCircleIcon },

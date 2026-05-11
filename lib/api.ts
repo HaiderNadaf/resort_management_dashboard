@@ -1,6 +1,7 @@
 import axios from "axios";
 import {
   AttendanceRecord,
+  DailyTask,
   RoomInspection,
   RoomInspectionCategoryCard,
   RoomInspectionDay,
@@ -164,4 +165,18 @@ export async function getAttendanceRecords(
     headers: { Authorization: `Bearer ${token}` },
   });
   return (data.attendance || []) as AttendanceRecord[];
+}
+
+export async function getAdminDailyTasks(
+  token: string,
+  params?: { date?: string; department?: string }
+): Promise<DailyTask[]> {
+  const { data } = await api.get("/daily-tasks/admin", {
+    params: {
+      ...(params?.date ? { date: params.date } : {}),
+      ...(params?.department ? { department: params.department } : {}),
+    },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return (data.tasks || []) as DailyTask[];
 }

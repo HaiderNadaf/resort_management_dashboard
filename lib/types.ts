@@ -97,3 +97,16 @@ export type AttendanceRecord = {
     capturedAtLabel?: string;
   } | null;
 };
+
+export type DailyTask = {
+  _id: string;
+  taskTitle: string;
+  status: "started" | "completed";
+  dateKey: string;
+  startTime: string;
+  endTime?: string | null;
+  startImageUrl: string;
+  endImageUrl?: string | null;
+  department: string;
+  employee?: Pick<User, "_id" | "name" | "phone" | "department"> | null;
+};
