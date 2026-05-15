@@ -2,6 +2,8 @@ export type UserRole = "admin" | "employee";
 
 export type TicketStatus = "pending" | "in_progress" | "completed";
 
+export type RoomInspectionStatus = "pending" | "in_progress" | "completed" | "occupied";
+
 export type User = {
   _id: string;
   name: string;
@@ -47,6 +49,9 @@ export type RoomInspectionCategoryCard = {
   categoryName: string;
   totalRooms: number;
   completedRooms: number;
+  inProgressRooms?: number;
+  pendingRooms?: number;
+  occupiedRooms?: number;
   progress: string;
   assignedTo?: Pick<User, "_id" | "name" | "department"> | null;
 };
@@ -65,8 +70,8 @@ export type RoomInspection = {
   categoryName: string;
   roomNumber: number;
   roomLabel: string;
-  department: string;
-  status: TicketStatus;
+  department?: string;
+  status: RoomInspectionStatus;
   assignedBy?: Pick<User, "_id" | "name" | "department"> | null;
   assignedTo?: Pick<User, "_id" | "name" | "department"> | null;
   assignmentHistory?: Array<{

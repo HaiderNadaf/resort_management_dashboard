@@ -108,7 +108,7 @@ export async function getRoomInspectionDashboard(
 ): Promise<{
   inspectionDate: string;
   categories: RoomInspectionCategoryCard[];
-  summary: { total: number; completed: number; inProgress: number; pending: number };
+  summary: { total: number; completed: number; occupied: number; inProgress: number; pending: number };
 }> {
   const { data } = await api.get("/room-inspections/dashboard", {
     params: { date },
@@ -120,6 +120,7 @@ export async function getRoomInspectionDashboard(
     summary: {
       total: Number(data.summary?.total || 0),
       completed: Number(data.summary?.completed || 0),
+      occupied: Number(data.summary?.occupied || 0),
       inProgress: Number(data.summary?.inProgress || 0),
       pending: Number(data.summary?.pending || 0),
     },

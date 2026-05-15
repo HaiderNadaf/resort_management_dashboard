@@ -33,7 +33,7 @@ export default function TicketsPage() {
       const matchesSearch =
         !searchTerm ||
         ticket.title.toLowerCase().includes(searchTerm) ||
-        ticket.description.toLowerCase().includes(searchTerm);
+        (ticket.description ?? "").toLowerCase().includes(searchTerm);
       const matchesStatus = statusFilter === "all" || ticket.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
