@@ -103,6 +103,46 @@ export type AttendanceRecord = {
   } | null;
 };
 
+export type LocationPingPoint = {
+  latitude: number;
+  longitude: number;
+  accuracy?: number | null;
+  capturedAt: string;
+  capturedAtLabel?: string;
+};
+
+export type LiveTrackingEmployee = {
+  user: Pick<User, "_id" | "name" | "phone" | "department">;
+  onShift: boolean;
+  status: "on_shift" | "checked_out";
+  checkIn?: {
+    latitude: number;
+    longitude: number;
+    capturedAt: string;
+    capturedAtLabel?: string;
+  } | null;
+  checkOut?: {
+    latitude: number;
+    longitude: number;
+    capturedAt: string;
+    capturedAtLabel?: string;
+  } | null;
+  lastPing?: LocationPingPoint | null;
+  displayLocation?: (LocationPingPoint & { source?: "gps" | "check_in" }) | null;
+};
+
+export type LiveTrackingSummary = {
+  total: number;
+  onShift: number;
+  withLocation: number;
+};
+
+export type TrackingTrail = {
+  dateKey: string;
+  user: Pick<User, "_id" | "name" | "phone" | "department">;
+  pings: LocationPingPoint[];
+};
+
 export type DailyTask = {
   _id: string;
   taskTitle: string;

@@ -2,11 +2,14 @@ import axios from "axios";
 import {
   AttendanceRecord,
   DailyTask,
+  LiveTrackingEmployee,
+  LiveTrackingSummary,
   RoomInspection,
   RoomInspectionCategoryCard,
   RoomInspectionDay,
   Ticket,
   TicketPagination,
+  TrackingTrail,
   User,
 } from "@/lib/types";
 
@@ -159,13 +162,57 @@ export async function getAttendanceRecords(
   token: string,
   params?: { date?: string }
 ): Promise<AttendanceRecord[]> {
-  const { data } = await api.get("/attendance", {
-    params: {
-      ...(params?.date ? { date: params.date } : {}),
-    },
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return (data.attendance || []) as AttendanceRecord[];
+  try {
+    const { data } = await api.get("/attendance", {
+      params: {
+        date: params?.date,
+      },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return (data.attendance || []) as AttendanceRecord[];
+  } catch (error) {
+    throw new Error(apiErrorMessage(error, "Failed to fetch attendance records"));
+  }
+}
+
+export async function getLiveTracking(
+  token: string,
+  params?: { date?: string; includeAll?: boolean }
+): Promise<{ dateKey: string; employees: LiveTrackingEmployee[]; summary: LiveTrackingSummary }> {
+  try {
+    const { data } = await api.get("/tracking/live", {
+      params: {
+        ...(params?.date ? { date: params.date } : {}),
+        ...(params?.includeAll ? { all: "true" } : {}),
+      },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return {
+      dateKey: data.dateKey as string,
+      employees: (data.employees || []) as LiveTrackingEmployee[],
+      summary: (data.summary || { total: 0, onShift: 0, withLocation: 0 }) as LiveTrackingSummary,
+    };
+  } catch (error) {
+    throw new Error(apiErrorMessage(error, "Failed to fetch live tracking"));
+  }
+}
+
+export async function getTrackingTrail(
+  token: string,
+  params: { userId: string; date?: string }
+): Promise<TrackingTrail> {
+  try {
+    const { data } = await api.get("/tracking/trail", {
+      params: {
+        userId: params.userId,
+        ...(params.date ? { date: params.date } : {}),
+      },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return data as TrackingTrail;
+  } catch (error) {
+    throw new Error(apiErrorMessage(error, "Failed to fetch tracking trail"));
+  }
 }
 
 export async function getAdminDailyTasks(

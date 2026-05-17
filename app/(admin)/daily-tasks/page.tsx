@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getAdminDailyTasks } from "@/lib/api";
 import { DailyTask } from "@/lib/types";
 import { MainAdminGuard } from "@/components/dashboard/MainAdminGuard";
+import { todayDateKey } from "@/lib/date-key";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
 function formatDate(value?: string | null) {
@@ -22,18 +23,10 @@ function formatDate(value?: string | null) {
   });
 }
 
-function todayKey() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 export default function DailyTasksPage() {
   const { token, users, loadData } = useDashboardStore();
   const [tasks, setTasks] = useState<DailyTask[]>([]);
-  const [date, setDate] = useState(todayKey());
+  const [date, setDate] = useState(todayDateKey());
   const [department, setDepartment] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
