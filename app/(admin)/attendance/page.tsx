@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MainAdminGuard } from "@/components/dashboard/MainAdminGuard";
 import { getAttendanceRecords } from "@/lib/api";
+import { todayDateKey } from "@/lib/date-key";
 import { AttendanceRecord } from "@/lib/types";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
@@ -13,19 +14,19 @@ function mapUrl(latitude: number, longitude: number, mode: "map" | "satellite") 
 
 export default function AttendancePage() {
   const { token } = useDashboardStore();
-  const [dateFilter, setDateFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState(todayDateKey());
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [activeMap, setActiveMap] = useState<{ id: string; type: "in" | "out"; lat: number; lng: number } | null>(null);
   const [mapMode, setMapMode] = useState<"map" | "satellite">("map");
 
-  const load = async (date?: string) => {
+  const load = async (date: string) => {
     if (!token) return;
     setLoading(true);
     setError("");
     try {
-      const response = await getAttendanceRecords(token, { date });
+      const response = await getAttendanceRecords(token, { date: date || todayDateKey() });
       setRecords(response);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load attendance");
@@ -35,7 +36,7 @@ export default function AttendancePage() {
   };
 
   useEffect(() => {
-    load(dateFilter || undefined);
+    load(dateFilter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, dateFilter]);
 
@@ -53,10 +54,10 @@ export default function AttendancePage() {
             />
             <button
               type="button"
-              onClick={() => setDateFilter("")}
+              onClick={() => setDateFilter(todayDateKey())}
               className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm font-medium"
             >
-              Clear
+              Today
             </button>
           </div>
         </div>

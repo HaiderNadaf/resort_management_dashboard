@@ -50,8 +50,8 @@ export function AssignTicketModal({ open, users, onClose, onSubmit }: AssignTick
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
             <textarea
-              {...register("description", { required: true })}
-              placeholder="Description"
+              {...register("description")}
+              placeholder="Description (optional)"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
             <select

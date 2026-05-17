@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getAdminDailyTasks } from "@/lib/api";
 import { DailyTask } from "@/lib/types";
 import { MainAdminGuard } from "@/components/dashboard/MainAdminGuard";
+import { todayDateKey } from "@/lib/date-key";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
 const ALL_DEPARTMENTS = "__all__";
@@ -33,7 +34,7 @@ function formatTime(value?: string | null) {
 export default function DepartmentActivityPage() {
   const { token, users, loadData } = useDashboardStore();
   const [tasks, setTasks] = useState<DailyTask[]>([]);
-  const [date, setDate] = useState(todayKey());
+  const [date, setDate] = useState(todayDateKey());
   const [activeDept, setActiveDept] = useState<string>(ALL_DEPARTMENTS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

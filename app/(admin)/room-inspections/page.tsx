@@ -9,7 +9,7 @@ import {
   getRoomInspectionDashboard,
   getRoomInspectionsByCategory,
 } from "@/lib/api";
-import { RoomInspection, RoomInspectionCategoryCard, RoomInspectionDay } from "@/lib/types";
+import { RoomInspection, RoomInspectionCategoryCard, RoomInspectionDay, RoomInspectionStatus } from "@/lib/types";
 import { useDashboardStore } from "@/store/useDashboardStore";
 
 function dateKey(date: Date) {
@@ -28,14 +28,16 @@ function prettyDateLabel(value: Date) {
   return value.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function roomStatusText(status: RoomInspection["status"]) {
+function roomStatusText(status: RoomInspectionStatus) {
   if (status === "completed") return "Complete";
+  if (status === "occupied") return "Occupied";
   if (status === "in_progress") return "In Progress";
   return "Not Started";
 }
 
-function roomStatusClass(status: RoomInspection["status"]) {
+function roomStatusClass(status: RoomInspectionStatus) {
   if (status === "completed") return "bg-emerald-700 text-white";
+  if (status === "occupied") return "bg-indigo-100 text-indigo-800 ring-1 ring-indigo-200";
   if (status === "in_progress") return "bg-amber-100 text-amber-700 ring-1 ring-amber-200";
   return "bg-slate-100 text-slate-600 ring-1 ring-slate-200";
 }
@@ -58,6 +60,7 @@ export default function RoomInspectionsPage() {
   const [dashboardSummary, setDashboardSummary] = useState({
     total: 0,
     completed: 0,
+    occupied: 0,
     inProgress: 0,
     pending: 0,
   });
@@ -84,7 +87,7 @@ export default function RoomInspectionsPage() {
     ])
       .then(([dashboard, calendar]) => {
         setCategories(dashboard.categories || []);
-        setDashboardSummary(dashboard.summary || { total: 0, completed: 0, inProgress: 0, pending: 0 });
+        setDashboardSummary(dashboard.summary || { total: 0, completed: 0, occupied: 0, inProgress: 0, pending: 0 });
         setDays(calendar || []);
         const firstCategory = dashboard.categories?.[0]?.categoryKey ?? "";
         setSelectedCategory((prev) => {
@@ -146,12 +149,14 @@ export default function RoomInspectionsPage() {
   }, [days]);
 
   const selectedCategorySummary = useMemo(() => {
-    const completed = rooms.filter((room) => room.status === "completed").length;
+    const completedStrict = rooms.filter((room) => room.status === "completed").length;
+    const occupiedOnly = rooms.filter((room) => room.status === "occupied").length;
     const inProgress = rooms.filter((room) => room.status === "in_progress").length;
     const pending = rooms.filter((room) => room.status === "pending").length;
     return {
       total: rooms.length,
-      completed,
+      completedStrict,
+      occupiedOnly,
       inProgress,
       pending,
     };
@@ -194,24 +199,28 @@ export default function RoomInspectionsPage() {
 
       <section className="space-y-5 mt-2 rounded-2xl border border-[#d7e2db] bg-[#f5f8f5] p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-slate-900">Today&apos;s Progress</h2>
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">Today&apos;s Progress</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              {categories.length} categories · {totalRooms} rooms total
+            </p>
+          </div>
           <div className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500">
             Last updated: {lastUpdatedLabel}
           </div>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-5">
           {categories.map((category) => {
             const progressPercent = category.totalRooms
               ? Math.round((category.completedRooms / category.totalRooms) * 100)
               : 0;
-            const categoryRooms = rooms.filter((item) => item.categoryKey === category.categoryKey);
-            const categoryInProgress = categoryRooms.some((item) => item.status === "in_progress");
+            const inProgress = category.inProgressRooms ?? 0;
             const categoryStatusLabel =
               category.completedRooms === category.totalRooms && category.totalRooms > 0
                 ? "Complete"
-                : categoryInProgress
-                ? "In Progress"
-                : "Not Started";
+                : inProgress > 0
+                  ? "In Progress"
+                  : "Not Started";
             const categoryStatusClass =
               categoryStatusLabel === "Complete"
                 ? "bg-emerald-700 text-white"
@@ -255,7 +264,10 @@ export default function RoomInspectionsPage() {
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700">
-                {selectedCategorySummary.completed} Completed
+                {selectedCategorySummary.completedStrict} Completed
+              </span>
+              <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-1 text-indigo-800">
+                {selectedCategorySummary.occupiedOnly} Occupied
               </span>
               <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-amber-700">
                 {selectedCategorySummary.inProgress} In Progress
