@@ -103,6 +103,7 @@ export default function DailyTasksPage() {
                 <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide">Start Time</th>
                 <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide">End Time</th>
                 <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide">Status</th>
+                <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide">Voice</th>
                 <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide">Task Image</th>
               </tr>
             </thead>
@@ -124,6 +125,15 @@ export default function DailyTasksPage() {
                     >
                       {task.status === "completed" ? "Completed" : "Started"}
                     </span>
+                  </td>
+                  <td className="px-4 py-4">
+                    {task.startVoiceUrl ? (
+                      <audio controls preload="none" src={task.startVoiceUrl} className="h-9 max-w-[200px]">
+                        <track kind="captions" />
+                      </audio>
+                    ) : (
+                      <span className="text-xs text-slate-400">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-4">
                     {task.startImageUrl ? (

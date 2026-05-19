@@ -203,6 +203,11 @@ export default function DepartmentActivityPage() {
                           </p>
                           <p className="mt-0.5 text-xs text-slate-500">Start: {formatTime(task.startTime)}</p>
                           <p className="text-xs text-slate-500">End: {formatTime(task.endTime)}</p>
+                          {task.startVoiceUrl ? (
+                            <audio controls preload="none" src={task.startVoiceUrl} className="mt-2 h-9 max-w-full">
+                              <track kind="captions" />
+                            </audio>
+                          ) : null}
                         </div>
                       </div>
                     );

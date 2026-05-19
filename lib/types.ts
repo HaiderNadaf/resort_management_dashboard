@@ -151,6 +151,7 @@ export type DailyTask = {
   startTime: string;
   endTime?: string | null;
   startImageUrl: string;
+  startVoiceUrl?: string | null;
   endImageUrl?: string | null;
   department: string;
   employee?: Pick<User, "_id" | "name" | "phone" | "department"> | null;
